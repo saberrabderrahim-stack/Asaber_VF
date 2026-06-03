@@ -56,7 +56,8 @@ color:#0d47c9;
 
 input[type=text],
 input[type=password],
-input[type=number]{
+input[type=number],
+select {
 width:100%;
 padding:14px;
 border-radius:10px;
@@ -65,6 +66,7 @@ margin-top:5px;
 margin-bottom:15px;
 font-size:16px;
 box-sizing:border-box;
+background-white;
 }
 
 .radio-group{
@@ -136,6 +138,18 @@ color:white;
 display:none;
 }
 
+.totals-box {
+display: flex;
+justify-content: space-around;
+background: #f8fafc;
+border: 1px solid #e2e8f0;
+padding: 15px;
+border-radius: 10px;
+margin-top: 15px;
+font-weight: bold;
+color: #0d47c9;
+}
+
 /* تنسيقات شاشة تسجيل الدخول المتطابقة مع الهوية البصرية لشاشتك */
 .login-card {
 max-width: 450px;
@@ -188,6 +202,12 @@ th,td{
 padding:5px;
 }
 
+.totals-box {
+flex-direction: column;
+gap: 10px;
+text-align: center;
+}
+
 }
 
 </style>
@@ -196,7 +216,6 @@ padding:5px;
 
 <body>
 
-<!-- شاشة تسجيل الدخول المحدثة بالشعار الجديد كلياً -->
 <div id="loginSection" class="container">
     <div class="card login-card">
         <img src="logo.jpeg" class="login-logo" alt="Logo">
@@ -222,7 +241,6 @@ padding:5px;
     </div>
 </div>
 
-<!-- المحتوى الرئيسي للتطبيق (مخفي حتى تسجيل الدخول الصحيح) -->
 <div id="mainAppSection" class="hidden">
 
     <div class="header">
@@ -238,15 +256,21 @@ padding:5px;
     <div class="container">
 
         <div class="card">
-        <h2>NOUVEAU TRONÇON</h2>
-
         <label>Nom du tronçon</label>
         <input type="text" id="troncon">
 
         <div class="radio-group">
-        <label><input type="radio" name="dn" value="DN 32" checked> DN 32</label>
-        <label><input type="radio" name="dn" value="DN 50"> DN 50</label>
+        <label><input type="radio" name="dn" value="32" checked> DN 32</label>
+        <label><input type="radio" name="dn" value="50"> DN 50</label>
         </div>
+
+        <label>Nombre des compteurs</label>
+        <select id="nbrCompteurs">
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+        </select>
 
         <label>chaussée</label>
         <input type="number" class="numeric" id="chaussee" value="0">
@@ -273,12 +297,18 @@ padding:5px;
         <button class="show-btn" onclick="toggleTable()">👁 Afficher / Masquer le tableau</button>
 
         <div id="tableSection" class="hidden">
+            <div class="totals-box">
+                <div>Total الأطوال (32): <span id="total32">0</span></div>
+                <div>Total الأطوال (50): <span id="total50">0</span></div>
+            </div>
+
             <table id="tronconTable">
             <thead>
             <tr>
             <th>Total</th>
             <th>Tronçon</th>
             <th>DN</th>
+            <th>Nbr Compteurs</th>
             <th>chaussée</th>
             <th>carllage O</th>
             <th>carllage S</th>
@@ -336,9 +366,30 @@ document.querySelectorAll('.numeric').forEach(input=>{
     });
 });
 
+function calculateDNTotals() {
+    let total32 = 0;
+    let total50 = 0;
+    const rows = document.querySelectorAll("#tronconTable tbody tr");
+    
+    rows.forEach(row => {
+        const dnValue = row.cells[2].innerText.trim();
+        const totalValue = Number(row.cells[0].innerText) || 0;
+        
+        if (dnValue === "32") {
+            total32 += totalValue;
+        } else if (dnValue === "50") {
+            total50 += totalValue;
+        }
+    });
+    
+    document.getElementById("total32").innerText = total32;
+    document.getElementById("total50").innerText = total50;
+}
+
 function addOrUpdate() {
     const troncon=document.getElementById('troncon').value;
-    const dn=document.querySelector('input[name="dn"]:checked').value;
+    const dn=document.querySelector('input[name="dn"]:checked').value; // أصبحت القيمة مخزنة 32 أو 50 مباشرة دون كلمة DN
+    const nbrCompteurs=document.getElementById('nbrCompteurs').value;
 
     const ch=document.getElementById('chaussee').value || 0;
     const co=document.getElementById('carllageO').value || 0;
@@ -352,21 +403,23 @@ function addOrUpdate() {
 
     if(editIndex===-1){
         const row=tbody.insertRow();
-        row.innerHTML = "<td>" + total + "</td><td>" + troncon + "</td><td>" + dn + "</td><td>" + ch + "</td><td>" + co + "</td><td>" + cs + "</td><td>" + pv + "</td><td>" + bt + "</td><td>" + tn + "</td><td><button class='edit-btn' onclick='editRow(this)'>✏️</button></td><td><button class='delete-btn' onclick='deleteRow(this)'>🗑</button></td>";
+        row.innerHTML = "<td>" + total + "</td><td>" + troncon + "</td><td>" + dn + "</td><td>" + nbrCompteurs + "</td><td>" + ch + "</td><td>" + co + "</td><td>" + cs + "</td><td>" + pv + "</td><td>" + bt + "</td><td>" + tn + "</td><td><button class='edit-btn' onclick='editRow(this)'>✏️</button></td><td><button class='delete-btn' onclick='deleteRow(this)'>🗑</button></td>";
     }else{
         const row=tbody.rows[editIndex];
         row.cells[0].innerText=total;
         row.cells[1].innerText=troncon;
         row.cells[2].innerText=dn;
-        row.cells[3].innerText=ch;
-        row.cells[4].innerText=co;
-        row.cells[5].innerText=cs;
-        row.cells[6].innerText=pv;
-        row.cells[7].innerText=bt;
-        row.cells[8].innerText=tn;
+        row.cells[3].innerText=nbrCompteurs;
+        row.cells[4].innerText=ch;
+        row.cells[5].innerText=co;
+        row.cells[6].innerText=cs;
+        row.cells[7].innerText=pv;
+        row.cells[8].innerText=bt;
+        row.cells[9].innerText=tn;
         editIndex=-1;
     }
     saveData();
+    calculateDNTotals();
     resetFields();
 }
 
@@ -374,26 +427,31 @@ function editRow(btn){
     const row=btn.parentElement.parentElement;
     editIndex=row.rowIndex-1;
     document.getElementById('troncon').value=row.cells[1].innerText;
+    
     const dn=row.cells[2].innerText;
     document.querySelectorAll('input[name="dn"]').forEach(r=>{
         r.checked=r.value===dn;
     });
-    document.getElementById('chaussee').value=row.cells[3].innerText;
-    document.getElementById('carllageO').value=row.cells[4].innerText;
-    document.getElementById('carllageS').value=row.cells[5].innerText;
-    document.getElementById('pave').value=row.cells[6].innerText;
-    document.getElementById('beton').value=row.cells[7].innerText;
-    document.getElementById('tn').value=row.cells[8].innerText;
+    
+    document.getElementById('nbrCompteurs').value=row.cells[3].innerText;
+    document.getElementById('chaussee').value=row.cells[4].innerText;
+    document.getElementById('carllageO').value=row.cells[5].innerText;
+    document.getElementById('carllageS').value=row.cells[6].innerText;
+    document.getElementById('pave').value=row.cells[7].innerText;
+    document.getElementById('beton').value=row.cells[8].innerText;
+    document.getElementById('tn').value=row.cells[9].innerText;
     window.scrollTo({top:0,behavior:'smooth'});
 }
 
 function deleteRow(btn){
     btn.parentElement.parentElement.remove();
     saveData();
+    calculateDNTotals();
 }
 
 function resetFields(){
     document.getElementById('troncon').value='';
+    document.getElementById('nbrCompteurs').value='1';
     document.querySelectorAll('.numeric').forEach(input=>{
         input.value='0';
     });
@@ -417,6 +475,7 @@ window.onload=function(){
     const data=localStorage.getItem("tableData");
     if(data){
         document.querySelector("#tronconTable tbody").innerHTML=data;
+        calculateDNTotals();
     }
 }
 
