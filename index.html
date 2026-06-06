@@ -200,6 +200,16 @@ font-weight: bold;
 color: #0d47c9;
 }
 
+.totals-row.extra-row {
+color: #1e8e3e;
+font-size: 14px;
+margin-top: 2px;
+}
+
+.totals-row.extra-row span {
+font-weight: bold;
+}
+
 .login-card {
 max-width: 450px;
 margin: 40px auto;
@@ -360,6 +370,9 @@ text-align: left;
                         <div>Compteurs (4): <span id="tot32_C4">0</span></div>
                         <div>Jonctions (J): <span id="tot32_J">0</span></div>
                     </div>
+                    <div class="totals-row extra-row">
+                        <div>Linéaire &gt; 5: <span id="extra32">0</span></div>
+                    </div>
                 </div>
 
                 <div>
@@ -373,6 +386,9 @@ text-align: left;
                         <div>Compteurs (3): <span id="tot50_C3">0</span></div>
                         <div>Compteurs (4): <span id="tot50_C4">0</span></div>
                         <div>Jonctions (J): <span id="tot50_J">0</span></div>
+                    </div>
+                    <div class="totals-row extra-row">
+                        <div>Linéaire &gt; 5: <span id="extra50">0</span></div>
                     </div>
                 </div>
             </div>
@@ -442,6 +458,7 @@ document.querySelectorAll('.numeric').forEach(input=>{
 
 function calculateDashboardTotals() {
     let total32 = 0, total50 = 0;
+    let extra32 = 0, extra50 = 0; // متغيرات الحساب الجديد لما فوق 5 أمتار
     
     let c32_1 = 0, c32_2 = 0, c32_3 = 0, c32_4 = 0, j32 = 0;
     let c50_1 = 0, c50_2 = 0, c50_3 = 0, c50_4 = 0, j50 = 0;
@@ -450,7 +467,6 @@ function calculateDashboardTotals() {
     
     rows.forEach(row => {
         const compValue = row.cells[0].innerText.trim();
-        // نسترجع قيمة الـ DN الأصلية المخزنة في الـ attribute الخاص بالسطر
         const dnValue = row.getAttribute('data-dn') || "";
         
         const tot32Val = Number(row.cells[2].innerText) || 0;
@@ -458,6 +474,11 @@ function calculateDashboardTotals() {
         
         if (dnValue === "32") {
             total32 += tot32Val;
+            // حساب الأمتار فوق المتر الخامس لـ DN 32
+            if (tot32Val > 5) {
+                extra32 += (tot32Val - 5);
+            }
+            
             if (compValue === "1") c32_1++;
             else if (compValue === "2") c32_2++;
             else if (compValue === "3") c32_3++;
@@ -467,6 +488,11 @@ function calculateDashboardTotals() {
         
         if (dnValue === "50") {
             total50 += tot50Val;
+            // حساب الأمتار فوق المتر الخامس لـ DN 50
+            if (tot50Val > 5) {
+                extra50 += (tot50Val - 5);
+            }
+            
             if (compValue === "1") c50_1++;
             else if (compValue === "2") c50_2++;
             else if (compValue === "3") c50_3++;
@@ -475,19 +501,23 @@ function calculateDashboardTotals() {
         }
     });
     
+    // تحديث قيم واجهة DN 32
     document.getElementById("total32").innerText = total32;
     document.getElementById("tot32_C1").innerText = c32_1;
     document.getElementById("tot32_C2").innerText = c32_2;
     document.getElementById("tot32_C3").innerText = c32_3;
     document.getElementById("tot32_C4").innerText = c32_4;
     document.getElementById("tot32_J").innerText = j32;
+    document.getElementById("extra32").innerText = extra32; // عرض قيمة الحساب الجديد
     
+    // تحديث قيم واجهة DN 50
     document.getElementById("total50").innerText = total50;
     document.getElementById("tot50_C1").innerText = c50_1;
     document.getElementById("tot50_C2").innerText = c50_2;
     document.getElementById("tot50_C3").innerText = c50_3;
     document.getElementById("tot50_C4").innerText = c50_4;
     document.getElementById("tot50_J").innerText = j50;
+    document.getElementById("extra50").innerText = extra50; // عرض قيمة الحساب الجديد
 }
 
 function addOrUpdate() {
@@ -503,7 +533,6 @@ function addOrUpdate() {
     
     const dn = dnChecked.value;
     let nbrCompteurs = compChecked.value;
-    // ترميز الـ Jonction إلى J داخل الجدول بناء على طلبك
     let displayCompteurs = nbrCompteurs === "Jonction" ? "J" : nbrCompteurs;
 
     const ch=document.getElementById('chaussee').value || 0;
@@ -515,18 +544,15 @@ function addOrUpdate() {
 
     const total = Number(ch)+Number(co)+Number(cs)+Number(pv)+Number(bt)+Number(tn);
     
-    // تقسيم التوتال حسب الـ DN المختار
     const total32 = (dn === "32") ? total : 0;
     const total50 = (dn === "50") ? total : 0;
 
     const tbody=document.querySelector("#tronconTable tbody");
-
-    // الكود لإنشاء السطر بالترتيب الجديد تماماً
     const rowHTML = "<td>" + displayCompteurs + "</td><td>" + troncon + "</td><td>" + total32 + "</td><td>" + total50 + "</td><td>" + ch + "</td><td>" + pv + "</td><td>" + co + "</td><td>" + cs + "</td><td>" + bt + "</td><td>" + tn + "</td><td><button class='edit-btn' onclick='editRow(this)'>✏️</button></td><td><button class='delete-btn' onclick='deleteRow(this)'>🗑</button></td>";
 
     if(editIndex===-1){
         const row=tbody.insertRow();
-        row.setAttribute('data-dn', dn); // لحفظ قيمة الـ DN الأصلية للسطر للحسابات والتعديل
+        row.setAttribute('data-dn', dn);
         row.innerHTML = rowHTML;
     }else{
         const row=tbody.rows[editIndex];
@@ -545,13 +571,11 @@ function editRow(btn){
     
     document.getElementById('troncon').value=row.cells[1].innerText;
     
-    // جلب الـ DN المخزن في السطر
     const dn=row.getAttribute('data-dn');
     document.querySelectorAll('input[name="dn"]').forEach(r=>{
         r.checked=r.value===dn;
     });
     
-    // جلب نوع العداد وإرجاع قيمة الـ J إلى Jonction للأسلحة الراديوية
     let count=row.cells[0].innerText;
     if(count === "J") count = "Jonction";
     document.querySelectorAll('input[name="compteurs"]').forEach(r=>{
@@ -596,7 +620,6 @@ function exportExcel(){
 }
 
 function saveData(){
-    // حفظ الـ HTML الحالي للجدول مع الـ attribute الخاص بالـ data-dn لكل سطر
     const tbody = document.querySelector("#tronconTable tbody");
     const rowsData = [];
     tbody.querySelectorAll('tr').forEach(row => {
