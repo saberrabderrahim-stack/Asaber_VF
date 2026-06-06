@@ -458,7 +458,7 @@ document.querySelectorAll('.numeric').forEach(input=>{
 
 function calculateDashboardTotals() {
     let total32 = 0, total50 = 0;
-    let extra32 = 0, extra50 = 0; // متغيرات الحساب الجديد لما فوق 5 أمتار
+    let extra32 = 0, extra50 = 0;
     
     let c32_1 = 0, c32_2 = 0, c32_3 = 0, c32_4 = 0, j32 = 0;
     let c50_1 = 0, c50_2 = 0, c50_3 = 0, c50_4 = 0, j50 = 0;
@@ -474,7 +474,6 @@ function calculateDashboardTotals() {
         
         if (dnValue === "32") {
             total32 += tot32Val;
-            // حساب الأمتار فوق المتر الخامس لـ DN 32
             if (tot32Val > 5) {
                 extra32 += (tot32Val - 5);
             }
@@ -488,7 +487,6 @@ function calculateDashboardTotals() {
         
         if (dnValue === "50") {
             total50 += tot50Val;
-            // حساب الأمتار فوق المتر الخامس لـ DN 50
             if (tot50Val > 5) {
                 extra50 += (tot50Val - 5);
             }
@@ -501,27 +499,26 @@ function calculateDashboardTotals() {
         }
     });
     
-    // تحديث قيم واجهة DN 32
     document.getElementById("total32").innerText = total32;
     document.getElementById("tot32_C1").innerText = c32_1;
     document.getElementById("tot32_C2").innerText = c32_2;
     document.getElementById("tot32_C3").innerText = c32_3;
     document.getElementById("tot32_C4").innerText = c32_4;
     document.getElementById("tot32_J").innerText = j32;
-    document.getElementById("extra32").innerText = extra32; // عرض قيمة الحساب الجديد
+    document.getElementById("extra32").innerText = extra32;
     
-    // تحديث قيم واجهة DN 50
     document.getElementById("total50").innerText = total50;
     document.getElementById("tot50_C1").innerText = c50_1;
     document.getElementById("tot50_C2").innerText = c50_2;
     document.getElementById("tot50_C3").innerText = c50_3;
     document.getElementById("tot50_C4").innerText = c50_4;
     document.getElementById("tot50_J").innerText = j50;
-    document.getElementById("extra50").innerText = extra50; // عرض قيمة الحساب الجديد
+    document.getElementById("extra50").innerText = extra50;
 }
 
 function addOrUpdate() {
-    const troncon = document.getElementById('troncon').value;
+    const tronconInput = document.getElementById('troncon');
+    const troncon = tronconInput.value;
     
     const dnChecked = document.querySelector('input[name="dn"]:checked');
     const compChecked = document.querySelector('input[name="compteurs"]:checked');
@@ -563,6 +560,9 @@ function addOrUpdate() {
     saveData();
     calculateDashboardTotals();
     resetFields();
+    
+    // الميزة المطلوبة: إرجاع الـ Focus تلقائياً إلى خانة الحقل tronçon
+    tronconInput.focus();
 }
 
 function editRow(btn){
