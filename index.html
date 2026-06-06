@@ -325,14 +325,14 @@ text-align: left;
         <label>Chaussée</label>
         <input type="number" class="numeric" id="chaussee" value="0">
 
+        <label>Pavé</label>
+        <input type="number" class="numeric" id="pave" value="0">
+
         <label>Carrelage O</label>
         <input type="number" class="numeric" id="carllageO" value="0">
 
         <label>Carrelage S</label>
         <input type="number" class="numeric" id="carllageS" value="0">
-
-        <label>Pavé</label>
-        <input type="number" class="numeric" id="pave" value="0">
 
         <label>Béton</label>
         <input type="number" class="numeric" id="beton" value="0">
@@ -358,7 +358,7 @@ text-align: left;
                         <div>Compteurs (2): <span id="tot32_C2">0</span></div>
                         <div>Compteurs (3): <span id="tot32_C3">0</span></div>
                         <div>Compteurs (4): <span id="tot32_C4">0</span></div>
-                        <div>Jonctions: <span id="tot32_J">0</span></div>
+                        <div>Jonctions (J): <span id="tot32_J">0</span></div>
                     </div>
                 </div>
 
@@ -372,22 +372,22 @@ text-align: left;
                         <div>Compteurs (2): <span id="tot50_C2">0</span></div>
                         <div>Compteurs (3): <span id="tot50_C3">0</span></div>
                         <div>Compteurs (4): <span id="tot50_C4">0</span></div>
-                        <div>Jonctions: <span id="tot50_J">0</span></div>
+                        <div>Jonctions (J): <span id="tot50_J">0</span></div>
                     </div>
                 </div>
             </div>
 
-            <table id="tronconTable">
+            <table id="tronconTable" data-dn-hidden-store="">
             <thead>
             <tr>
-            <th>Total</th>
-            <th>Tronçon</th>
-            <th>DN</th>
             <th>Nbr Compteurs</th>
+            <th>Tronçon</th>
+            <th>Total 32</th>
+            <th>Total 50</th>
             <th>Chaussée</th>
+            <th>Pavé</th>
             <th>Carrelage O</th>
             <th>Carrelage S</th>
-            <th>Pavé</th>
             <th>Béton</th>
             <th>TN</th>
             <th>Modifier</th>
@@ -443,38 +443,38 @@ document.querySelectorAll('.numeric').forEach(input=>{
 function calculateDashboardTotals() {
     let total32 = 0, total50 = 0;
     
-    // عدادات خاص بـ DN 32
     let c32_1 = 0, c32_2 = 0, c32_3 = 0, c32_4 = 0, j32 = 0;
-    // عدادات خاصة بـ DN 50
     let c50_1 = 0, c50_2 = 0, c50_3 = 0, c50_4 = 0, j50 = 0;
     
     const rows = document.querySelectorAll("#tronconTable tbody tr");
     
     rows.forEach(row => {
-        const totalValue = Number(row.cells[0].innerText) || 0;
-        const dnValue = row.cells[2].innerText.trim();
-        const compValue = row.cells[3].innerText.trim();
+        const compValue = row.cells[0].innerText.trim();
+        // نسترجع قيمة الـ DN الأصلية المخزنة في الـ attribute الخاص بالسطر
+        const dnValue = row.getAttribute('data-dn') || "";
+        
+        const tot32Val = Number(row.cells[2].innerText) || 0;
+        const tot50Val = Number(row.cells[3].innerText) || 0;
         
         if (dnValue === "32") {
-            total32 += totalValue;
+            total32 += tot32Val;
             if (compValue === "1") c32_1++;
             else if (compValue === "2") c32_2++;
             else if (compValue === "3") c32_3++;
             else if (compValue === "4") c32_4++;
-            else if (compValue === "Jonction") j32++;
+            else if (compValue === "J" || compValue === "Jonction") j32++;
         }
         
         if (dnValue === "50") {
-            total50 += totalValue;
+            total50 += tot50Val;
             if (compValue === "1") c50_1++;
             else if (compValue === "2") c50_2++;
             else if (compValue === "3") c50_3++;
             else if (compValue === "4") c50_4++;
-            else if (compValue === "Jonction") j50++;
+            else if (compValue === "J" || compValue === "Jonction") j50++;
         }
     });
     
-    // تحديث قيم واجهة DN 32
     document.getElementById("total32").innerText = total32;
     document.getElementById("tot32_C1").innerText = c32_1;
     document.getElementById("tot32_C2").innerText = c32_2;
@@ -482,7 +482,6 @@ function calculateDashboardTotals() {
     document.getElementById("tot32_C4").innerText = c32_4;
     document.getElementById("tot32_J").innerText = j32;
     
-    // تحديث قيم واجهة DN 50
     document.getElementById("total50").innerText = total50;
     document.getElementById("tot50_C1").innerText = c50_1;
     document.getElementById("tot50_C2").innerText = c50_2;
@@ -503,33 +502,36 @@ function addOrUpdate() {
     }
     
     const dn = dnChecked.value;
-    const nbrCompteurs = compChecked.value;
+    let nbrCompteurs = compChecked.value;
+    // ترميز الـ Jonction إلى J داخل الجدول بناء على طلبك
+    let displayCompteurs = nbrCompteurs === "Jonction" ? "J" : nbrCompteurs;
 
     const ch=document.getElementById('chaussee').value || 0;
+    const pv=document.getElementById('pave').value || 0;
     const co=document.getElementById('carllageO').value || 0;
     const cs=document.getElementById('carllageS').value || 0;
-    const pv=document.getElementById('pave').value || 0;
     const bt=document.getElementById('beton').value || 0;
     const tn=document.getElementById('tn').value || 0;
 
-    const total=Number(ch)+Number(co)+Number(cs)+Number(pv)+Number(bt)+Number(tn);
+    const total = Number(ch)+Number(co)+Number(cs)+Number(pv)+Number(bt)+Number(tn);
+    
+    // تقسيم التوتال حسب الـ DN المختار
+    const total32 = (dn === "32") ? total : 0;
+    const total50 = (dn === "50") ? total : 0;
+
     const tbody=document.querySelector("#tronconTable tbody");
+
+    // الكود لإنشاء السطر بالترتيب الجديد تماماً
+    const rowHTML = "<td>" + displayCompteurs + "</td><td>" + troncon + "</td><td>" + total32 + "</td><td>" + total50 + "</td><td>" + ch + "</td><td>" + pv + "</td><td>" + co + "</td><td>" + cs + "</td><td>" + bt + "</td><td>" + tn + "</td><td><button class='edit-btn' onclick='editRow(this)'>✏️</button></td><td><button class='delete-btn' onclick='deleteRow(this)'>🗑</button></td>";
 
     if(editIndex===-1){
         const row=tbody.insertRow();
-        row.innerHTML = "<td>" + total + "</td><td>" + troncon + "</td><td>" + dn + "</td><td>" + nbrCompteurs + "</td><td>" + ch + "</td><td>" + co + "</td><td>" + cs + "</td><td>" + pv + "</td><td>" + bt + "</td><td>" + tn + "</td><td><button class='edit-btn' onclick='editRow(this)'>✏️</button></td><td><button class='delete-btn' onclick='deleteRow(this)'>🗑</button></td>";
+        row.setAttribute('data-dn', dn); // لحفظ قيمة الـ DN الأصلية للسطر للحسابات والتعديل
+        row.innerHTML = rowHTML;
     }else{
         const row=tbody.rows[editIndex];
-        row.cells[0].innerText=total;
-        row.cells[1].innerText=troncon;
-        row.cells[2].innerText=dn;
-        row.cells[3].innerText=nbrCompteurs;
-        row.cells[4].innerText=ch;
-        row.cells[5].innerText=co;
-        row.cells[6].innerText=cs;
-        row.cells[7].innerText=pv;
-        row.cells[8].innerText=bt;
-        row.cells[9].innerText=tn;
+        row.setAttribute('data-dn', dn);
+        row.innerHTML = rowHTML;
         editIndex=-1;
     }
     saveData();
@@ -540,24 +542,29 @@ function addOrUpdate() {
 function editRow(btn){
     const row=btn.parentElement.parentElement;
     editIndex=row.rowIndex-1;
+    
     document.getElementById('troncon').value=row.cells[1].innerText;
     
-    const dn=row.cells[2].innerText;
+    // جلب الـ DN المخزن في السطر
+    const dn=row.getAttribute('data-dn');
     document.querySelectorAll('input[name="dn"]').forEach(r=>{
         r.checked=r.value===dn;
     });
     
-    const count=row.cells[3].innerText;
+    // جلب نوع العداد وإرجاع قيمة الـ J إلى Jonction للأسلحة الراديوية
+    let count=row.cells[0].innerText;
+    if(count === "J") count = "Jonction";
     document.querySelectorAll('input[name="compteurs"]').forEach(r=>{
         r.checked=r.value===count;
     });
     
     document.getElementById('chaussee').value=row.cells[4].innerText;
-    document.getElementById('carllageO').value=row.cells[5].innerText;
-    document.getElementById('carllageS').value=row.cells[6].innerText;
-    document.getElementById('pave').value=row.cells[7].innerText;
+    document.getElementById('pave').value=row.cells[5].innerText;
+    document.getElementById('carllageO').value=row.cells[6].innerText;
+    document.getElementById('carllageS').value=row.cells[7].innerText;
     document.getElementById('beton').value=row.cells[8].innerText;
     document.getElementById('tn').value=row.cells[9].innerText;
+    
     window.scrollTo({top:0,behavior:'smooth'});
 }
 
@@ -589,13 +596,29 @@ function exportExcel(){
 }
 
 function saveData(){
-    localStorage.setItem("tableData",document.querySelector("#tronconTable tbody").innerHTML);
+    // حفظ الـ HTML الحالي للجدول مع الـ attribute الخاص بالـ data-dn لكل سطر
+    const tbody = document.querySelector("#tronconTable tbody");
+    const rowsData = [];
+    tbody.querySelectorAll('tr').forEach(row => {
+        rowsData.push({
+            dn: row.getAttribute('data-dn'),
+            html: row.innerHTML
+        });
+    });
+    localStorage.setItem("tableDataRows", JSON.stringify(rowsData));
 }
 
 window.onload=function(){
-    const data=localStorage.getItem("tableData");
-    if(data){
-        document.querySelector("#tronconTable tbody").innerHTML=data;
+    const dataJSON=localStorage.getItem("tableDataRows");
+    if(dataJSON){
+        const rowsData = JSON.parse(dataJSON);
+        const tbody = document.querySelector("#tronconTable tbody");
+        tbody.innerHTML = "";
+        rowsData.forEach(item => {
+            const row = tbody.insertRow();
+            row.setAttribute('data-dn', item.dn);
+            row.innerHTML = item.html;
+        });
     }
     resetFields();
     calculateDashboardTotals();
